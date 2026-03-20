@@ -1,63 +1,78 @@
 # EventZen — Features & Module Details
 
+## Architecture Features
+
+| Feature | Technology | Description |
+|---------|-----------|-------------|
+| API Gateway | Spring Cloud Gateway | Single entry point, routes all requests |
+| Inter-Service Communication | OpenFeign | Event Service calls Auth Service for user details |
+| Circuit Breaker | Resilience4j | Fallback responses when a service is down |
+| Authentication | JWT (JSON Web Tokens) | Stateless auth across all microservices |
+| Database-Per-Service | MySQL 8 | Each microservice has its own database |
+
+---
+
 ## Module 1: User & Authentication
 
 ### Features
-- **User Registration** — New users can sign up with name, email, and password
-- **User Login** — Authenticate with email/password, receive JWT token
+- **User Registration** — Sign up with name, email, and password
+- **User Login** — Authenticate and receive JWT token
 - **Role-Based Access** — Three roles: Admin, Organizer, Attendee
-- **Profile Management** — View and update own profile
-- **User Administration** — Admin can list, update roles, and delete users
-- **JWT Security** — Stateless authentication across all microservices
+- **Profile Management** — View current user profile via JWT
+- **User Administration** — Admin: list, update roles, delete users
+- **Password Security** — BCrypt hashing
 
 ### Technical Details
-- Passwords hashed with BCrypt
+- Spring Boot + Spring Security
 - JWT tokens contain user ID, email, and role
 - Token expiry: 24 hours
+- Exposes `GET /api/auth/users/{id}` for OpenFeign calls from other services
 
 ---
 
 ## Module 2: Event Management
 
 ### Features
-- **Create Events** — Organizers create events with title, description, dates, venue
-- **Event Listing** — Browse all published events with pagination
-- **Event Details** — View complete event information
+- **Create Events** — Title, description, dates, venue, capacity
+- **Event Listing** — Paginated list with search/filter
+- **Event Details** — Includes organizer name (fetched via OpenFeign)
 - **Venue Management** — Add and browse venues with capacity and pricing
-- **Vendor Coordination** — Assign vendors (caterers, decorators, etc.) to events
-- **Event Status Tracking** — Draft → Published → Ongoing → Completed / Cancelled
+- **Vendor Coordination** — Assign vendors to events (Many-to-Many)
+- **Event Status** — Draft → Published → Ongoing → Completed / Cancelled
 
 ### Technical Details
+- Spring Boot + Spring Data JPA
 - JPA relationships: Event → Venue (Many-to-One), Event ↔ Vendor (Many-to-Many)
-- Pagination and sorting support
-- Only organizer/admin can create and modify events
+- **OpenFeign** to call Auth Service for organizer details
+- Pagination and custom query support
 
 ---
 
 ## Module 3: Attendee Management
 
 ### Features
-- **RSVP System** — Attendees can register for events
+- **RSVP System** — Attendees register for events
 - **Guest List** — View all attendees for an event
-- **Invitation System** — Organizers send email invitations
-- **RSVP Tracking** — Track statuses: Invited, Confirmed, Declined, Waitlisted
+- **Invitation System** — Organizers invite by email
+- **Status Tracking** — Invited → Confirmed / Declined / Waitlisted
 - **My Events** — Attendees view their registered events
 
 ### Technical Details
+- Node.js + Express + Sequelize ORM
 - Unique constraint: one registration per user per event
-- Status transitions: Invited → Confirmed/Declined
+- JWT middleware validates tokens using shared secret
 
 ---
 
 ## Module 4: Budget & Finance
 
 ### Features
-- **Budget Creation** — Set a total budget for each event
-- **Expense Tracking** — Log individual expenses by category
-- **Categories** — Venue, Catering, Decoration, Entertainment, Marketing, Transportation, Staff, Miscellaneous
-- **Financial Reports** — Summary of total budget, total spent, remaining balance
-- **Expense Breakdown** — View expenses by category with percentages
+- **Budget Creation** — Set total budget per event (one budget per event)
+- **Expense Tracking** — Log individual expenses with category and date
+- **8 Categories** — Venue, Catering, Decoration, Entertainment, Marketing, Transportation, Staff, Miscellaneous
+- **Financial Reports** — Total budget, total spent, remaining balance, category breakdown
 
 ### Technical Details
-- One budget per event (unique constraint)
-- Report includes: total budget, total expenses, balance, category-wise breakdown
+- Node.js + Express + Sequelize ORM
+- One budget per event (unique constraint on event_id)
+- Report endpoint calculates aggregates dynamically

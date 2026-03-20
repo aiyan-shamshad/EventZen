@@ -1,16 +1,18 @@
 -- ============================================================
 -- EventZen — Database Initialization Script
--- Creates all 4 databases and their tables
+-- Creates all 4 microservice databases with tables
 -- Run: mysql -u root -p < init.sql
 -- ============================================================
 
+
 -- ============================================================
--- DATABASE 1: eventzen_users (User & Auth Service)
+-- DATABASE 1: eventzen_users (User & Auth Service — Spring Boot)
 -- ============================================================
-CREATE DATABASE IF NOT EXISTS eventzen_users;
+DROP DATABASE IF EXISTS eventzen_users;
+CREATE DATABASE eventzen_users;
 USE eventzen_users;
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
@@ -20,18 +22,19 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Insert default admin user (password: admin123 — BCrypt hash)
+-- Default admin (password: admin123 — BCrypt hash)
 INSERT INTO users (name, email, password_hash, role) VALUES
 ('Admin User', 'admin@eventzen.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'ADMIN');
 
 
 -- ============================================================
--- DATABASE 2: eventzen_events (Event Service)
+-- DATABASE 2: eventzen_events (Event Service — Spring Boot)
 -- ============================================================
-CREATE DATABASE IF NOT EXISTS eventzen_events;
+DROP DATABASE IF EXISTS eventzen_events;
+CREATE DATABASE eventzen_events;
 USE eventzen_events;
 
-CREATE TABLE IF NOT EXISTS venues (
+CREATE TABLE venues (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(150) NOT NULL,
     address VARCHAR(300) NOT NULL,
@@ -41,14 +44,14 @@ CREATE TABLE IF NOT EXISTS venues (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS events (
+CREATE TABLE events (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(200) NOT NULL,
     description TEXT,
     start_date DATETIME NOT NULL,
     end_date DATETIME NOT NULL,
     venue_id BIGINT,
-    organizer_id BIGINT NOT NULL,
+    organizer_id BIGINT NOT NULL COMMENT 'References users.id in eventzen_users (cross-service)',
     status ENUM('DRAFT', 'PUBLISHED', 'ONGOING', 'COMPLETED', 'CANCELLED') NOT NULL DEFAULT 'DRAFT',
     max_attendees INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -56,17 +59,17 @@ CREATE TABLE IF NOT EXISTS events (
     FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE SET NULL
 );
 
-CREATE TABLE IF NOT EXISTS vendors (
+CREATE TABLE vendors (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(150) NOT NULL,
-    service_type VARCHAR(100) NOT NULL,
+    service_type VARCHAR(100) NOT NULL COMMENT 'e.g. Catering, Decoration, Photography',
     contact_email VARCHAR(150),
     contact_phone VARCHAR(20),
     cost DECIMAL(10, 2),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS event_vendors (
+CREATE TABLE event_vendors (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     event_id BIGINT NOT NULL,
     vendor_id BIGINT NOT NULL,
@@ -76,32 +79,41 @@ CREATE TABLE IF NOT EXISTS event_vendors (
     UNIQUE KEY unique_event_vendor (event_id, vendor_id)
 );
 
--- Insert sample venues
+-- Sample venues
 INSERT INTO venues (name, address, city, capacity, cost_per_day) VALUES
 ('Grand Ballroom', '123 Main Street', 'Bangalore', 500, 50000.00),
 ('Tech Hub Conference Center', '456 Innovation Park', 'Bangalore', 200, 25000.00),
-('Garden Pavilion', '789 Lake View Road', 'Mumbai', 150, 35000.00);
+('Garden Pavilion', '789 Lake View Road', 'Mumbai', 150, 35000.00),
+('Skyline Rooftop', '321 Tower Avenue', 'Delhi', 100, 40000.00);
+
+-- Sample vendors
+INSERT INTO vendors (name, service_type, contact_email, contact_phone, cost) VALUES
+('Delicious Bites Catering', 'CATERING', 'info@deliciousbites.com', '9876543210', 15000.00),
+('Dream Decor', 'DECORATION', 'hello@dreamdecor.com', '9876543211', 20000.00),
+('SnapShot Photography', 'PHOTOGRAPHY', 'book@snapshot.com', '9876543212', 12000.00),
+('BeatDrop DJ Services', 'ENTERTAINMENT', 'dj@beatdrop.com', '9876543213', 8000.00);
 
 
 -- ============================================================
--- DATABASE 3: eventzen_attendees (Attendee Service)
+-- DATABASE 3: eventzen_attendees (Attendee Service — Node.js)
 -- ============================================================
-CREATE DATABASE IF NOT EXISTS eventzen_attendees;
+DROP DATABASE IF EXISTS eventzen_attendees;
+CREATE DATABASE eventzen_attendees;
 USE eventzen_attendees;
 
-CREATE TABLE IF NOT EXISTS registrations (
+CREATE TABLE registrations (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    event_id BIGINT NOT NULL,
-    user_id BIGINT NOT NULL,
+    event_id BIGINT NOT NULL COMMENT 'References events.id in eventzen_events (cross-service)',
+    user_id BIGINT NOT NULL COMMENT 'References users.id in eventzen_users (cross-service)',
     status ENUM('INVITED', 'CONFIRMED', 'DECLINED', 'WAITLISTED') NOT NULL DEFAULT 'INVITED',
     registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY unique_event_user (event_id, user_id)
 );
 
-CREATE TABLE IF NOT EXISTS invitations (
+CREATE TABLE invitations (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    event_id BIGINT NOT NULL,
+    event_id BIGINT NOT NULL COMMENT 'References events.id in eventzen_events (cross-service)',
     email VARCHAR(150) NOT NULL,
     invitee_name VARCHAR(100),
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -111,20 +123,21 @@ CREATE TABLE IF NOT EXISTS invitations (
 
 
 -- ============================================================
--- DATABASE 4: eventzen_budget (Budget Service)
+-- DATABASE 4: eventzen_budget (Budget Service — Node.js)
 -- ============================================================
-CREATE DATABASE IF NOT EXISTS eventzen_budget;
+DROP DATABASE IF EXISTS eventzen_budget;
+CREATE DATABASE eventzen_budget;
 USE eventzen_budget;
 
-CREATE TABLE IF NOT EXISTS budgets (
+CREATE TABLE budgets (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    event_id BIGINT NOT NULL UNIQUE,
+    event_id BIGINT NOT NULL UNIQUE COMMENT 'References events.id in eventzen_events (cross-service)',
     total_budget DECIMAL(12, 2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS expenses (
+CREATE TABLE expenses (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     budget_id BIGINT NOT NULL,
     category ENUM('VENUE', 'CATERING', 'DECORATION', 'ENTERTAINMENT', 'MARKETING', 'TRANSPORTATION', 'STAFF', 'MISCELLANEOUS') NOT NULL,
@@ -137,16 +150,18 @@ CREATE TABLE IF NOT EXISTS expenses (
 
 
 -- ============================================================
--- Verification: Show all created databases and tables
+-- Verification Queries
 -- ============================================================
-SELECT 'DATABASE: eventzen_users' AS info;
+SELECT '✅ eventzen_users tables:' AS info;
 SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'eventzen_users';
 
-SELECT 'DATABASE: eventzen_events' AS info;
+SELECT '✅ eventzen_events tables:' AS info;
 SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'eventzen_events';
 
-SELECT 'DATABASE: eventzen_attendees' AS info;
+SELECT '✅ eventzen_attendees tables:' AS info;
 SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'eventzen_attendees';
 
-SELECT 'DATABASE: eventzen_budget' AS info;
+SELECT '✅ eventzen_budget tables:' AS info;
 SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'eventzen_budget';
+
+SELECT '🎉 All 4 databases created successfully!' AS result;

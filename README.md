@@ -2,37 +2,49 @@
 
 A full-stack microservices-based Event Management System built for the **CloudThat Capstone Project**.
 
+## Architecture
+
+```
+React (5173) → API Gateway (8080) → Microservices → MySQL
+```
+
+All client requests go through a **Spring Cloud API Gateway** which routes to the correct microservice. Services communicate via **OpenFeign** and are protected by **Circuit Breakers**.
+
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
 | Frontend | React.js (Vite) |
+| API Gateway | Spring Cloud Gateway |
 | Backend | Spring Boot (Java 21) + Node.js (Express) |
-| Database | MySQL 8 |
+| Database | MySQL 8 (database-per-service) |
 | Auth | JWT (JSON Web Tokens) |
+| Inter-Service | OpenFeign |
+| Resilience | Resilience4j Circuit Breaker |
 | Containerization | Docker + Docker Compose |
-| Architecture | Microservices |
 
 ## Microservices
 
-| Service | Tech | Port | Description |
-|---------|------|------|-------------|
-| `user-auth-service` | Spring Boot | 8081 | User registration, login, JWT, roles |
-| `event-service` | Spring Boot | 8082 | Event CRUD, venues, vendors |
-| `attendee-service` | Node.js | 3001 | Guest lists, RSVPs, invitations |
-| `budget-service` | Node.js | 3002 | Budgets, expenses, reports |
-| `frontend` | React | 5173 | Single Page Application |
+| Service | Tech | Port | Database |
+|---------|------|------|----------|
+| `api-gateway` | Spring Cloud Gateway | 8080 | — |
+| `user-auth-service` | Spring Boot | 8081 | eventzen_users |
+| `event-service` | Spring Boot + OpenFeign | 8082 | eventzen_events |
+| `attendee-service` | Node.js + Express | 3001 | eventzen_attendees |
+| `budget-service` | Node.js + Express | 3002 | eventzen_budget |
+| `frontend` | React (Vite) | 5173 | — |
 
 ## Project Structure
 
 ```
-├── frontend/                 # React.js (Vite)
+├── api-gateway/              # Spring Cloud Gateway
 ├── user-auth-service/        # Spring Boot
-├── event-service/            # Spring Boot
+├── event-service/            # Spring Boot + OpenFeign
 ├── attendee-service/         # Node.js + Express
 ├── budget-service/           # Node.js + Express
+├── frontend/                 # React.js (Vite)
 ├── docs/                     # ER diagrams, wireframes, API docs
-├── init.sql                  # Database initialization script
+├── init.sql                  # Database initialization
 └── docker-compose.yml        # Container orchestration
 ```
 
@@ -49,27 +61,43 @@ A full-stack microservices-based Event Management System built for the **CloudTh
 mysql -u root -p < init.sql
 ```
 
+### Run Individual Services
+```bash
+# Spring Boot services
+cd user-auth-service && mvn spring-boot:run
+cd event-service && mvn spring-boot:run
+cd api-gateway && mvn spring-boot:run
+
+# Node.js services
+cd attendee-service && npm start
+cd budget-service && npm start
+
+# React frontend
+cd frontend && npm run dev
+```
+
 ## Modules
 
 ### 1. User & Authentication
-- User registration and login
-- JWT-based authentication
-- Role-based access (Admin / Organizer / Attendee)
+- User registration and login with JWT
+- Role-based access control (Admin / Organizer / Attendee)
+- BCrypt password hashing
 
 ### 2. Event Management
 - Create, read, update, delete events
 - Venue booking and management
 - Vendor coordination
+- Uses OpenFeign to fetch user details from Auth Service
 
 ### 3. Attendee Management
-- Guest list management
-- RSVP tracking
+- Guest list management and RSVP tracking
 - Send invitations
+- Status tracking: Invited → Confirmed / Declined / Waitlisted
 
 ### 4. Budget & Finance
 - Budget planning per event
-- Expense tracking
-- Financial reports and summaries
+- Expense tracking across 8 categories
+- Financial reports with summaries
 
 ## License
 This project is developed as a capstone project submission.

@@ -4,50 +4,44 @@
 
 ```mermaid
 erDiagram
-    %% ==========================================
-    %% DATABASE: eventzen_users
-    %% ==========================================
     USERS {
-        BIGINT id PK "Auto-increment"
-        VARCHAR name "NOT NULL"
-        VARCHAR email "UNIQUE, NOT NULL"
-        VARCHAR password_hash "NOT NULL"
-        ENUM role "ADMIN / ORGANIZER / ATTENDEE"
+        BIGINT id PK
+        VARCHAR name
+        VARCHAR email
+        VARCHAR password_hash
+        ENUM role "ADMIN/ORGANIZER/ATTENDEE"
         TIMESTAMP created_at
         TIMESTAMP updated_at
     }
 
-    %% ==========================================
-    %% DATABASE: eventzen_events
-    %% ==========================================
     VENUES {
-        BIGINT id PK "Auto-increment"
-        VARCHAR name "NOT NULL"
-        VARCHAR address "NOT NULL"
+        BIGINT id PK
+        VARCHAR name
+        VARCHAR address
         VARCHAR city
-        INT capacity "NOT NULL"
-        DECIMAL cost_per_day "NOT NULL"
+        INT capacity
+        DECIMAL cost_per_day
         TIMESTAMP created_at
     }
 
     EVENTS {
-        BIGINT id PK "Auto-increment"
-        VARCHAR title "NOT NULL"
+        BIGINT id PK
+        VARCHAR title
         TEXT description
-        DATETIME start_date "NOT NULL"
-        DATETIME end_date "NOT NULL"
-        BIGINT venue_id FK "References venues"
-        BIGINT organizer_id "References users (cross-service)"
-        ENUM status "DRAFT / PUBLISHED / ONGOING / COMPLETED / CANCELLED"
+        DATETIME start_date
+        DATETIME end_date
+        BIGINT venue_id FK
+        BIGINT organizer_id "cross-service ref to users"
+        ENUM status "DRAFT/PUBLISHED/ONGOING/COMPLETED/CANCELLED"
         INT max_attendees
         TIMESTAMP created_at
         TIMESTAMP updated_at
     }
 
     VENDORS {
-        BIGINT id PK "Auto-increment"
-        VARCHAR name "NOT NULL"
-        VARCHAR service_type "NOT NULL"
+        BIGINT id PK
+        VARCHAR name
+        VARCHAR service_type
         VARCHAR contact_email
         VARCHAR contact_phone
         DECIMAL cost
@@ -55,58 +49,49 @@ erDiagram
     }
 
     EVENT_VENDORS {
-        BIGINT id PK "Auto-increment"
-        BIGINT event_id FK "References events"
-        BIGINT vendor_id FK "References vendors"
+        BIGINT id PK
+        BIGINT event_id FK
+        BIGINT vendor_id FK
         TIMESTAMP assigned_at
     }
 
-    %% ==========================================
-    %% DATABASE: eventzen_attendees
-    %% ==========================================
     REGISTRATIONS {
-        BIGINT id PK "Auto-increment"
-        BIGINT event_id "References events (cross-service)"
-        BIGINT user_id "References users (cross-service)"
-        ENUM status "INVITED / CONFIRMED / DECLINED / WAITLISTED"
+        BIGINT id PK
+        BIGINT event_id "cross-service ref to events"
+        BIGINT user_id "cross-service ref to users"
+        ENUM status "INVITED/CONFIRMED/DECLINED/WAITLISTED"
         TIMESTAMP registered_at
         TIMESTAMP updated_at
     }
 
     INVITATIONS {
-        BIGINT id PK "Auto-increment"
-        BIGINT event_id "References events (cross-service)"
-        VARCHAR email "NOT NULL"
+        BIGINT id PK
+        BIGINT event_id "cross-service ref to events"
+        VARCHAR email
         VARCHAR invitee_name
         TIMESTAMP sent_at
-        ENUM rsvp_status "PENDING / ACCEPTED / DECLINED"
+        ENUM rsvp_status "PENDING/ACCEPTED/DECLINED"
         TIMESTAMP rsvp_at
     }
 
-    %% ==========================================
-    %% DATABASE: eventzen_budget
-    %% ==========================================
     BUDGETS {
-        BIGINT id PK "Auto-increment"
-        BIGINT event_id "UNIQUE, references events (cross-service)"
-        DECIMAL total_budget "NOT NULL"
+        BIGINT id PK
+        BIGINT event_id "UNIQUE, cross-service ref to events"
+        DECIMAL total_budget
         TIMESTAMP created_at
         TIMESTAMP updated_at
     }
 
     EXPENSES {
-        BIGINT id PK "Auto-increment"
-        BIGINT budget_id FK "References budgets"
-        ENUM category "VENUE / CATERING / DECORATION / etc."
+        BIGINT id PK
+        BIGINT budget_id FK
+        ENUM category "VENUE/CATERING/DECORATION/etc."
         VARCHAR description
-        DECIMAL amount "NOT NULL"
-        DATE expense_date "NOT NULL"
+        DECIMAL amount
+        DATE expense_date
         TIMESTAMP created_at
     }
 
-    %% ==========================================
-    %% RELATIONSHIPS
-    %% ==========================================
     VENUES ||--o{ EVENTS : "hosts"
     EVENTS ||--o{ EVENT_VENDORS : "has"
     VENDORS ||--o{ EVENT_VENDORS : "assigned to"
@@ -116,33 +101,33 @@ erDiagram
     BUDGETS ||--o{ EXPENSES : "tracks"
 ```
 
-## Database Boundaries
+## Database Boundaries (Microservice Pattern)
 
 ```mermaid
 graph LR
-    subgraph "eventzen_users"
+    subgraph "eventzen_users (Auth Service)"
         U[USERS]
     end
-    subgraph "eventzen_events"
+    subgraph "eventzen_events (Event Service)"
         V[VENUES]
         E[EVENTS]
         VD[VENDORS]
         EV[EVENT_VENDORS]
     end
-    subgraph "eventzen_attendees"
+    subgraph "eventzen_attendees (Attendee Service)"
         R[REGISTRATIONS]
         I[INVITATIONS]
     end
-    subgraph "eventzen_budget"
+    subgraph "eventzen_budget (Budget Service)"
         B[BUDGETS]
         EX[EXPENSES]
     end
 
-    U -.->|"organizer_id<br/>(cross-service ref)"| E
-    U -.->|"user_id<br/>(cross-service ref)"| R
-    E -.->|"event_id<br/>(cross-service ref)"| R
-    E -.->|"event_id<br/>(cross-service ref)"| I
-    E -.->|"event_id<br/>(cross-service ref)"| B
+    U -.->|"organizer_id (OpenFeign)"| E
+    U -.->|"user_id"| R
+    E -.->|"event_id"| R
+    E -.->|"event_id"| I
+    E -.->|"event_id"| B
 ```
 
-> **Note:** Dotted lines represent cross-service references. These are stored as IDs but NOT enforced by foreign keys since they span different databases. The application layer ensures consistency.
+> Dotted lines = cross-service references (stored as IDs, not enforced by FK). Event Service uses **OpenFeign** to call Auth Service for user details.

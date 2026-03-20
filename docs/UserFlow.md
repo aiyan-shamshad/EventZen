@@ -1,81 +1,106 @@
 # EventZen — User Flow
 
 ## User Roles
-- **Admin** — Full system access, manages users
+- **Admin** — Full system access, manages users and venues
 - **Organizer** — Creates and manages events, attendees, budgets
 - **Attendee** — Browses events, RSVPs, views details
 
-## Flow Diagrams
+## Authentication Flow
 
-### Registration & Authentication Flow
 ```mermaid
 flowchart TD
-    A[User visits EventZen] --> B{Has account?}
+    A[User opens EventZen] --> B{Has account?}
     B -->|No| C[Register Page]
     C --> D[Fill name, email, password]
-    D --> E[POST /api/auth/register]
+    D --> E["POST /api/auth/register<br/>(via Gateway :8080)"]
     E --> F[Account created]
     F --> G[Redirect to Login]
     B -->|Yes| G[Login Page]
     G --> H[Enter email & password]
-    H --> I[POST /api/auth/login]
-    I --> J{Valid credentials?}
+    H --> I["POST /api/auth/login<br/>(via Gateway :8080)"]
+    I --> J{Valid?}
     J -->|No| K[Show error]
     K --> G
     J -->|Yes| L[JWT token returned]
-    L --> M[Store token in localStorage]
+    L --> M[Store in localStorage]
     M --> N[Redirect to Dashboard]
 ```
 
-### Organizer Flow
+## Organizer Flow
+
 ```mermaid
 flowchart TD
     A[Organizer Dashboard] --> B[Create New Event]
     B --> C[Fill event details]
-    C --> D[Select/Add Venue]
+    C --> D[Select Venue]
     D --> E[Set dates & capacity]
-    E --> F[Publish Event]
-    
-    F --> G{Manage Event}
-    G --> H[Manage Attendees]
-    G --> I[Manage Budget]
-    G --> J[Assign Vendors]
-    
-    H --> H1[Send Invitations]
-    H --> H2[View Guest List]
-    H --> H3[Track RSVPs]
-    
-    I --> I1[Set Total Budget]
-    I --> I2[Add Expenses]
-    I --> I3[View Financial Report]
-    
-    J --> J1[Browse Vendors]
-    J --> J2[Assign to Event]
+    E --> F["POST /api/events<br/>(via Gateway → Event Service)"]
+    F --> G[Event Created]
+
+    G --> H{Manage Event}
+    H --> I[Manage Attendees]
+    H --> J[Manage Budget]
+    H --> K[Assign Vendors]
+
+    I --> I1[Send Invitations]
+    I --> I2[View Guest List]
+    I --> I3[Track RSVPs]
+
+    J --> J1[Set Total Budget]
+    J --> J2[Add Expenses]
+    J --> J3[View Financial Report]
+
+    K --> K1[Browse Vendors]
+    K --> K2[Assign to Event]
 ```
 
-### Attendee Flow
+## Attendee Flow
+
 ```mermaid
 flowchart TD
     A[Attendee Dashboard] --> B[Browse Events]
     B --> C[View Event Details]
     C --> D{RSVP?}
-    D -->|Yes| E[Confirm Attendance]
-    D -->|No| F[Decline]
+    D -->|Confirm| E[CONFIRMED status]
+    D -->|Decline| F[DECLINED status]
     E --> G[Added to Guest List]
     G --> H[View My Events]
 ```
 
-### Admin Flow
+## Admin Flow
+
 ```mermaid
 flowchart TD
     A[Admin Dashboard] --> B[Manage Users]
     A --> C[View All Events]
-    A --> D[System Overview]
-    
+    A --> D[Manage Venues]
+
     B --> B1[View All Users]
-    B --> B2[Change User Roles]
+    B --> B2[Change Roles]
     B --> B3[Delete Users]
-    
-    C --> C1[Monitor Events]
-    C --> C2[Manage Venues]
+
+    D --> D1[Add Venues]
+    D --> D2[Edit Venues]
+```
+
+## Request Flow Through System
+
+```mermaid
+sequenceDiagram
+    participant U as User Browser
+    participant R as React App
+    participant GW as API Gateway
+    participant AS as Auth Service
+    participant ES as Event Service
+
+    U->>R: Click "Create Event"
+    R->>GW: POST /api/events (JWT header)
+    GW->>ES: Route to Event Service
+    ES->>ES: Validate JWT
+    ES->>AS: OpenFeign: GET /api/auth/users/5
+    AS-->>ES: User details (organizer name)
+    ES->>ES: Save event to DB
+    ES-->>GW: Event JSON response
+    GW-->>R: Pass response
+    R-->>U: Show "Event Created!"
 ```
