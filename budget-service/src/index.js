@@ -7,9 +7,8 @@ const budgetRoutes = require('./routes/budgetRoutes');
 const app = express();
 const PORT = process.env.PORT || 3002;
 
-app.use(cors());
 app.use(express.json());
-
+// CORS is handled by API Gateway
 // Gateway routes /api/budget/** here
 app.use('/api/budget', budgetRoutes);
 

@@ -79,4 +79,17 @@ const getBudgetReport = async (req, res) => {
     }
 };
 
-module.exports = { setBudget, getBudget, addExpense, getExpenses, getBudgetReport };
+const deleteExpense = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const expense = await Expense.findByPk(id);
+        if (!expense) return res.status(404).json({ message: 'Expense not found' });
+        
+        await expense.destroy();
+        res.json({ message: 'Expense deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { setBudget, getBudget, addExpense, deleteExpense, getExpenses, getBudgetReport };

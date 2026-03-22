@@ -31,11 +31,20 @@ public class UserService {
         }
 
         // Build user entity
+        Role userRole = Role.ATTENDEE;
+        if (request.getRole() != null) {
+            try {
+                userRole = Role.valueOf(request.getRole().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // Keep default if invalid role provided
+            }
+        }
+
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .role(Role.ATTENDEE) // Default role
+                .role(userRole)
                 .build();
 
         // Save to database

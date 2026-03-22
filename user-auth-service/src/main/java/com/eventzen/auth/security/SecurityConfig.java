@@ -27,8 +27,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Enable CORS using CorsConfig bean
-                .cors(cors -> {})
+                // Disable CORS (API Gateway handles it)
+                .cors(cors -> cors.disable())
 
                 // Disable CSRF (we use JWT, not sessions)
                 .csrf(AbstractHttpConfigurer::disable)
