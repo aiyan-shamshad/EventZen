@@ -13,19 +13,21 @@ import com.eventzen.event.repository.VendorRepository;
 import com.eventzen.event.repository.VenueRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EventService {
 
     private final EventRepository eventRepository;
     private final VenueRepository venueRepository;
     private final VendorRepository vendorRepository;
     private final EventMapper eventMapper;
-    private final AuthServiceClient authServiceClient;
+    private final AuthProxy authProxy;
     private final HttpServletRequest request;
 
     /**
@@ -92,17 +94,13 @@ public class EventService {
     }
 
     /**
-     * Internal helper to fetch organizer details via OpenFeign.
+     * Internal helper to fetch organizer details via AuthProxy.
      */
     private EventResponse populateOrganizerName(EventResponse response) {
         if (response.getOrganizerId() != null) {
-            try {
-                AuthServiceClient.UserDto organizer = authServiceClient.getUserById(
-                        response.getOrganizerId(), getAuthToken());
-                response.setOrganizerName(organizer.getName());
-            } catch (Exception e) {
-                response.setOrganizerName("Unknown (Auth Service unavailable)");
-            }
+            AuthServiceClient.UserDto organizer = authProxy.getUserById(
+                    response.getOrganizerId(), getAuthToken());
+            response.setOrganizerName(organizer.getName());
         }
         return response;
     }
