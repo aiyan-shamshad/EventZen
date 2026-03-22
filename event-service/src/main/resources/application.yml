@@ -7,8 +7,8 @@ spring:
 
   datasource:
     url: jdbc:mysql://127.0.0.1:3306/eventzen_events?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: root
-    password: Aiyan123@
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:your_db_password}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -22,7 +22,7 @@ spring:
 
 # JWT Configuration (MUST match Auth Service's secret)
 jwt:
-  secret: eventzen-shared-secret-key-that-is-at-least-256-bits-long-for-hs256
+  secret: ${JWT_SECRET:your_jwt_secret_at_least_256_bits_long}
   expiration: 86400000
 
 # OpenFeign - Auth Service URL

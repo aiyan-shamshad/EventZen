@@ -61,6 +61,19 @@ All client requests go through a **Spring Cloud API Gateway** which routes to th
 mysql -u root -p < init.sql
 ```
 
+### Local Setup & Security
+To avoid exposing passwords in GitHub, this project uses environment variables.
+
+#### For Spring Boot Services
+The `application.yml` files use placeholders like `${DB_PASSWORD:default}`. You can override these by:
+1. Setting system environment variables (e.g., `export DB_PASSWORD=your_pass`).
+2. Passing them as Maven arguments: `mvn spring-boot:run -Dspring-boot.run.arguments="--DB_PASSWORD=your_pass"`.
+
+#### For Node.js Services
+1. Copy the `.env.example` file to create a `.env` file in each service folder.
+2. Update the `.env` file with your actual credentials.
+3. The `.env` files are ignored by Git.
+
 ### Run Individual Services
 ```bash
 # Spring Boot services
