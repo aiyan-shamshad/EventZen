@@ -1,0 +1,38 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: event-service
+
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/eventzen_events?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: Aiyan123@
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+# JWT Configuration (MUST match Auth Service's secret)
+jwt:
+  secret: eventzen-shared-secret-key-that-is-at-least-256-bits-long-for-hs256
+  expiration: 86400000
+
+# OpenFeign - Auth Service URL
+feign:
+  auth-service:
+    url: http://localhost:8081
+
+# Swagger
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
