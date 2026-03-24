@@ -1,103 +1,110 @@
-# EventZen — Event Management System
 
-A full-stack microservices-based Event Management System built for the **CloudThat Capstone Project**.
+
+EventZen is a state-of-the-art, polyglot microservices platform built for the **Deloitte Capstone Project**. It streamlines event organization, attendee management, and real-time budget tracking through a decoupled, scalable architecture.
 
 ## Architecture
 
-```
-React (5173) → API Gateway (8080) → Microservices → MySQL
+```mermaid
+graph TD
+    Client[React Frontend :5173] --> Gateway[API Gateway :8080]
+    
+    subgraph "Java Services"
+        Gateway --> Auth[User-Auth Service :8081]
+        Gateway --> Event[Event Service :8082]
+    end
+    
+    subgraph "Node.js Services"
+        Gateway --> Attendee[Attendee Service :3001]
+        Gateway --> Budget[Budget Service :3002]
+    end
+    
+    Auth --> DB[(MySQL DB)]
+    Event --> DB
+    Attendee --> DB
+    Budget --> DB
 ```
 
-All client requests go through a **Spring Cloud API Gateway** which routes to the correct microservice. Services communicate via **OpenFeign** and are protected by **Circuit Breakers**.
-
-## Tech Stack
+## 🚀 Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React.js (Vite) |
-| API Gateway | Spring Cloud Gateway |
-| Backend | Spring Boot (Java 21) + Node.js (Express) |
-| Database | MySQL 8 (database-per-service) |
-| Auth | JWT (JSON Web Tokens) |
-| Inter-Service | OpenFeign |
-| Resilience | Resilience4j Circuit Breaker |
-| Containerization | Docker + Docker Compose |
+| **Frontend** | React.js (Vite) + Lucide Icons |
+| **API Gateway** | Spring Cloud Gateway (Reactive) |
+| **Backend (Java)** | Spring Boot 3 + Spring Security + OpenFeign |
+| **Backend (Node)** | Node.js + Express + Sequelize ORM |
+| **Database** | MySQL 8 (Isolated database-per-service) |
+| **Authentication** | JWT (Stateless JSON Web Tokens) |
+| **Documentation** | SpringDoc OpenAPI (Swagger) |
+| **Containerization** | Docker & Docker Compose (Multi-stage builds) |
 
-## Microservices
+---
 
-| Service | Tech | Port | Database |
-|---------|------|------|----------|
-| `api-gateway` | Spring Cloud Gateway | 8080 | — |
-| `user-auth-service` | Spring Boot | 8081 | eventzen_users |
-| `event-service` | Spring Boot + OpenFeign | 8082 | eventzen_events |
-| `attendee-service` | Node.js + Express | 3001 | eventzen_attendees |
-| `budget-service` | Node.js + Express | 3002 | eventzen_budget |
-| `frontend` | React (Vite) | 5173 | — |
+## 🛰️ Microservices Inventory
 
-## Project Structure
+| Service | Technology | Port | Database Name |
+|---------|------------|------|---------------|
+| `api-gateway` | Spring Cloud | 8080 | — |
+| `user-auth-service` | Spring Boot | 8081 | `eventzen_users` |
+| `event-service` | Spring Boot | 8082 | `eventzen_events` |
+| `attendee-service` | Node.js | 3001 | `eventzen_attendees` |
+| `budget-service` | Node.js | 3002 | `eventzen_budgets` |
+| `frontend` | React + Nginx | 5173 | — |
 
-```
-├── api-gateway/              # Spring Cloud Gateway
-├── user-auth-service/        # Spring Boot
-├── event-service/            # Spring Boot + OpenFeign
-├── attendee-service/         # Node.js + Express
-├── budget-service/           # Node.js + Express
-├── frontend/                 # React.js (Vite)
-├── docs/                     # ER diagrams, wireframes, API docs
-├── init.sql                  # Database initialization
-└── docker-compose.yml        # Container orchestration
-```
+---
 
-## Getting Started
+## 🛠️ Getting Started
 
-### Prerequisites
-- Java 21+
-- Node.js 18+
-- MySQL 8
-- Docker Desktop (for containerized deployment)
-
-### Database Setup
+###  Method 1: Docker (Fastest & Recommended)
+Use Docker Compose to spin up the entire cluster with one command.
 ```bash
-mysql -u root -p < init.sql
+docker-compose up --build -d
+```
+- **Web UI:** [http://localhost:5173](http://localhost:5173)
+- **API Docs:** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+
+### Method 2: Manual Development
+1. **Database:** Initialize MySQL schemas using `init.sql`.
+2. **Java Services:** Use `mvn spring-boot:run` in individual folders.
+3. **Node Services:** Use `npm install && npm start`.
+4. **Frontend:** Use `npm install && npm run dev`.
+
+---
+
+##  Features
+
+###  Identity & Access
+- JWT-based authentication with role-based dashboard views.
+- Secure password hashing via BCrypt.
+- Separated flows for **Organizers** and **Attendees**.
+
+###  Event Orchestration
+- Create and manage events with rich metadata (Title, Range, Capacity).
+- Secure deletion logic with Ownership Verification (Organizers can delete only their own events).
+
+###  Attendee Management
+- Real-time RSVP tracking.
+- Automated registration verification.
+
+###  Budget Intelligence
+- Per-event budget allocation.
+- Categorized expense logging (Venue, Catering, Marketing, etc.).
+- **Over-Budget Protection:** Prevents logging expenses that exceed allocated limits.
+- Floating visual progress bars for financial oversight.
+
+---
+
+##  Project Structure
+```
+├── api-gateway/              # Unified gateway & Swagger aggregator
+├── user-auth-service/        # Auth & Identity (Java)
+├── event-service/            # Event Management & Feign Clients (Java)
+├── attendee-service/         # RSVP & Attendee tracking (Node.js)
+├── budget-service/           # Expense & Budget logic (Node.js)
+├── frontend/                 # Premium React UI (Vite + Nginx)
+├── init.sql                  # Automated DB Schema creation
+└── docker-compose.yml        # Orchestration Blueprint
 ```
 
-### Run Individual Services
-```bash
-# Spring Boot services
-cd user-auth-service && mvn spring-boot:run
-cd event-service && mvn spring-boot:run
-cd api-gateway && mvn spring-boot:run
+## 📝 License
+This project is submitted as a final Capstone Project for CloudThat.
 
-# Node.js services
-cd attendee-service && npm start
-cd budget-service && npm start
-
-# React frontend
-cd frontend && npm run dev
-```
-
-## Modules
-
-### 1. User & Authentication
-- User registration and login with JWT
-- Role-based access control (Admin / Organizer / Attendee)
-- BCrypt password hashing
-
-### 2. Event Management
-- Create, read, update, delete events
-- Venue booking and management
-- Vendor coordination
-- Uses OpenFeign to fetch user details from Auth Service
-
-### 3. Attendee Management
-- Guest list management and RSVP tracking
-- Send invitations
-- Status tracking: Invited → Confirmed / Declined / Waitlisted
-
-### 4. Budget & Finance
-- Budget planning per event
-- Expense tracking across 8 categories
-- Financial reports with summaries
-
-## License
-This project is developed as a capstone project submission.
