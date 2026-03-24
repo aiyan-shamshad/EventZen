@@ -37,3 +37,14 @@ spring:
           uri: http://localhost:3002
           predicates:
             - Path=/api/budget/**
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: User & Auth Service
+        url: /api/auth/v3/api-docs
+      - name: Event Service
+        url: /api/events/v3/api-docs
+      # Note: Node.js services (Attendee/Budget) don't have v3/api-docs yet. 
+      # We would need to implement Swagger in them to add them here.

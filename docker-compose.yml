@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+  mysql-db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: eventzen_users # Creates the default one, we'll need init script or let Hibernate create DBs if configured. Wait, spring boot needs databases to exist.
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - eventzen-network
+
+  user-auth-service:
+    build: ./user-auth-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/eventzen_users?createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+    depends_on:
+      - mysql-db
+    networks:
+      - eventzen-network
+
+  event-service:
+    build: ./event-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/eventzen_events?createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - AUTH_SERVICE_URL=http://user-auth-service:8081
+    depends_on:
+      - mysql-db
+      - user-auth-service
+    networks:
+      - eventzen-network
+
+  attendee-service:
+    build: ./attendee-service
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - DB_HOST=mysql-db
+      - DB_USER=root
+      - DB_PASSWORD=root
+      - DB_NAME=eventzen_attendees
+      - JWT_SECRET=my-super-secret-key-for-jwt-signing
+    depends_on:
+      - mysql-db
+    networks:
+      - eventzen-network
+
+  budget-service:
+    build: ./budget-service
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - DB_HOST=mysql-db
+      - DB_USER=root
+      - DB_PASSWORD=root
+      - DB_NAME=eventzen_budgets
+      - JWT_SECRET=my-super-secret-key-for-jwt-signing
+    depends_on:
+      - mysql-db
+    networks:
+      - eventzen-network
+
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      # Inject Docker internal hostnames into the Gateway routes
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_URI=http://user-auth-service:8081
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_URI=http://event-service:8082
+      - SPRING_CLOUD_GATEWAY_ROUTES_2_URI=http://attendee-service:3001
+      - SPRING_CLOUD_GATEWAY_ROUTES_3_URI=http://budget-service:3002
+    depends_on:
+      - user-auth-service
+      - event-service
+      - attendee-service
+      - budget-service
+    networks:
+      - eventzen-network
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - eventzen-network
+
+volumes:
+  mysql_data:
+
+networks:
+  eventzen-network:
+    driver: bridge

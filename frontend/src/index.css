@@ -133,3 +133,13 @@ a:hover {
   margin: 0 auto;
   padding: 2rem;
 }
+
+@keyframes float {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(30px, -50px) scale(1.1); }
+  100% { transform: translate(-20px, 20px) scale(0.9); }
+}
+
+.landing-container {
+  overflow-x: hidden;
+}
