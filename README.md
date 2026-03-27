@@ -24,7 +24,7 @@ graph TD
     Budget --> DB
 ```
 
-## 🚀 Tech Stack
+##  Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
@@ -39,7 +39,7 @@ graph TD
 
 ---
 
-## 🛰️ Microservices Inventory
+##  Microservices Inventory
 
 | Service | Technology | Port | Database Name |
 |---------|------------|------|---------------|
@@ -105,6 +105,6 @@ docker-compose up --build -d
 └── docker-compose.yml        # Orchestration Blueprint
 ```
 
-## 📝 License
+##  License
 This project is submitted as a final Capstone Project for CloudThat.
 
