@@ -85,7 +85,7 @@ erDiagram
     EXPENSES {
         BIGINT id PK
         BIGINT budget_id FK
-        ENUM category "VENUE/CATERING/DECORATION/etc."
+        ENUM category "VENUE/CATERING/MARKETING/STAFF/OTHER"
         VARCHAR description
         DECIMAL amount
         DATE expense_date

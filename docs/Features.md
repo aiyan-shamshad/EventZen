@@ -68,9 +68,9 @@
 
 ### Features
 - **Budget Creation** — Set total budget per event (one budget per event)
-- **Expense Tracking** — Log individual expenses with category and date
-- **8 Categories** — Venue, Catering, Decoration, Entertainment, Marketing, Transportation, Staff, Miscellaneous
-- **Financial Reports** — Total budget, total spent, remaining balance, category breakdown
+- **Expense Tracking** — Log individual expenses with category, amount, and date
+- **5 Categories** — VENUE, CATERING, MARKETING, STAFF, OTHER
+- **Financial Reports** — Total budget, total spent, remaining balance, and expense summary
 
 ### Technical Details
 - Node.js + Express + Sequelize ORM

@@ -80,7 +80,6 @@ flowchart TD
     B --> B3[Delete Users]
 
     D --> D1[Add Venues]
-    D --> D2[Edit Venues]
 ```
 
 ## Request Flow Through System
