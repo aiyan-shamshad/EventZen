@@ -68,6 +68,15 @@ const Dashboard = () => {
                     </div>
                 )}
 
+                {/* Admin Specific Card */}
+                {user?.role === 'ADMIN' && (
+                    <div className="glass" style={{ padding: '2rem' }}>
+                        <h3 style={{ marginBottom: '1rem' }}>Admin Controls</h3>
+                        <p style={{ color: 'var(--text-muted)' }}>Manage all users, assign roles, and oversee the entire platform.</p>
+                        <Link to="/admin" className="btn btn-primary" style={{ marginTop: '1rem' }}>Open Admin Panel</Link>
+                    </div>
+                )}
+
                 {/* Attendee Specific Card */}
                 {user?.role === 'ATTENDEE' && (
                     <div className="glass" style={{ padding: '2rem' }}>

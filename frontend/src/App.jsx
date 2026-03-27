@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import Events from './pages/Events';
 import EventDetails from './pages/EventDetails';
 import CreateEvent from './pages/CreateEvent';
+import AdminPanel from './pages/AdminPanel';
 import Navbar from './components/Navbar';
 
 // Protected Route Wrapper
@@ -46,6 +47,11 @@ function App() {
           <Route path="/events/:id" element={
             <ProtectedRoute>
               <EventDetails />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <AdminPanel />
             </ProtectedRoute>
           } />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />

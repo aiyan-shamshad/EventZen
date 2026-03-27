@@ -44,4 +44,13 @@ public class EventController {
     public EventResponse assignVendor(@PathVariable Long eventId, @PathVariable Long vendorId) {
         return eventService.assignVendor(eventId, vendorId);
     }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
+    public void deleteEvent(@PathVariable Long id) {
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String role = SecurityContextHolder.getContext().getAuthentication().getAuthorities()
+                .iterator().next().getAuthority().replace("ROLE_", "");
+        eventService.deleteEvent(id, userId, role);
+    }
 }

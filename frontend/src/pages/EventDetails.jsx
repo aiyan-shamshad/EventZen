@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosConfig';
 import { useAuth } from '../context/AuthContext';
-import { Calendar, Users, DollarSign, CheckCircle } from 'lucide-react';
 
 const EventDetails = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
+
     const [event, setEvent] = useState(null);
     const [budget, setBudget] = useState(null);
     const [attendees, setAttendees] = useState([]);
@@ -128,6 +129,17 @@ const EventDetails = () => {
     if (!event) return <div className="container">Event not found.</div>;
 
     const isOrganizer = ['ORGANIZER', 'ADMIN'].includes(user?.role);
+    const canDelete = user?.role === 'ADMIN' || (user?.role === 'ORGANIZER' && event.organizerId === user?.userId);
+
+    const handleDeleteEvent = async () => {
+        if (!window.confirm('Are you sure you want to permanently delete this event?')) return;
+        try {
+            await api.delete(`/events/${id}`);
+            navigate('/events');
+        } catch (err) {
+            alert(err.response?.data?.message || 'Failed to delete event');
+        }
+    };
 
     return (
         <div className="animate-fade-in" style={{ paddingBottom: '4rem' }}>
@@ -138,23 +150,36 @@ const EventDetails = () => {
                     {event.description || 'No description provided for this event.'}
                 </p>
                 
-                <div style={{ display: 'flex', gap: '2rem', marginTop: '2rem' }}>
+                <div style={{ display: 'flex', gap: '2rem', marginTop: '2rem', flexWrap: 'wrap', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Calendar className="text-primary" />
-                        <span>{new Date(event.startDate).toLocaleString()}</span>
+                        • <span>{new Date(event.startDate).toLocaleString()}</span>
                     </div>
+                    {event.organizerName && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            • <span>Organized by <strong>{event.organizerName}</strong></span>
+                        </div>
+                    )}
+                    {canDelete && (
+                        <button onClick={handleDeleteEvent} className="btn" style={{ 
+                            marginLeft: 'auto',
+                            padding: '0.4rem 1rem', 
+                            background: 'rgba(255,68,68,0.1)', 
+                            color: 'var(--danger)', 
+                            border: '1px solid rgba(255,68,68,0.3)' 
+                        }}>
+                            Delete Event
+                        </button>
+                    )}
                 </div>
 
                 {!isOrganizer && (
                     <div style={{ marginTop: '3rem' }}>
                         {isRegistered ? (
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '1rem 2rem', background: 'rgba(16, 185, 129, 0.2)', color: 'var(--success)', borderRadius: '8px', fontWeight: 'bold' }}>
-                                <CheckCircle size={20} />
-                                You are Registered!
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '1rem 2rem', background: 'rgba(255, 255, 255, 0.1)', color: 'var(--success)', borderRadius: '8px', fontWeight: 'bold', border: '1px solid rgba(255,255,255,0.2)' }}>
+                                ✓ You are Registered!
                             </div>
                         ) : (
                             <button onClick={handleRSVP} className="btn btn-primary" style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}>
-                                <CheckCircle size={20} style={{ marginRight: '8px' }} />
                                 RSVP Now
                             </button>
                         )}
@@ -170,7 +195,7 @@ const EventDetails = () => {
                     {/* Attendee Service Micro-UI */}
                     <div className="glass" style={{ padding: '2rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Users /> Attendees ({attendees.length})</h3>
+                            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>👥 Attendees ({attendees.length})</h3>
                         </div>
                         {attendees.length > 0 ? (
                             <ul style={{ listStyle: 'none' }}>
@@ -188,7 +213,7 @@ const EventDetails = () => {
                     {/* Budget Service Micro-UI */}
                     <div className="glass" style={{ padding: '2rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><DollarSign /> Budget Tracker</h3>
+                            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>💰 Budget Tracker</h3>
                         </div>
                         {budget ? (
                             <div>

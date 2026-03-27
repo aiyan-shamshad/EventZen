@@ -1,13 +1,23 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/axiosConfig';
 import { useAuth } from '../context/AuthContext';
-import { Calendar, MapPin, Users } from 'lucide-react';
 
 const Events = () => {
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const { user } = useAuth();
+    const navigate = useNavigate();
+
+    const handleDeleteEvent = async (eventId) => {
+        if (!window.confirm('Are you sure you want to delete this event?')) return;
+        try {
+            await api.delete(`/events/${eventId}`);
+            fetchEvents();
+        } catch (err) {
+            alert(err.response?.data?.message || 'Failed to delete event');
+        }
+    };
 
     useEffect(() => {
         fetchEvents();
@@ -33,13 +43,13 @@ const Events = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <h2>All Events</h2>
                 {['ORGANIZER', 'ADMIN'].includes(user?.role) && (
-                    <button className="btn btn-primary">Create Event</button>
+                    <Link to="/events/new" className="btn btn-primary">Create Event</Link>
                 )}
             </div>
 
             {events.length === 0 ? (
                 <div className="glass" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                    <Calendar size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
+                    <p style={{ fontSize: '1.1rem', opacity: 0.5, marginBottom: '1rem' }}>📅</p>
                     <p>No events found. Check back later!</p>
                 </div>
             ) : (
@@ -62,18 +72,31 @@ const Events = () => {
                             </div>
                             <div style={{ padding: '1.5rem', flex: 1 }}>
                                 <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <Calendar size={16} /> 
-                                    {new Date(event.startDate).toLocaleDateString()}
+                                    • {new Date(event.startDate).toLocaleDateString()}
                                 </p>
-                                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <Users size={16} /> 
-                                    {event.maxAttendees ? `Max ${event.maxAttendees} people` : 'Unlimited capacity'}
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    • {event.maxAttendees ? `Max ${event.maxAttendees} people` : 'Unlimited capacity'}
                                 </p>
+                                {event.organizerName && (
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        • Organized by <strong style={{ color: 'white' }}>{event.organizerName}</strong>
+                                    </p>
+                                )}
                             </div>
-                            <div style={{ padding: '1.5rem', borderTop: '1px solid var(--border-color)' }}>
-                                <Link to={`/events/${event.id}`} className="btn" style={{ width: '100%', border: '1px solid var(--primary)', color: 'white' }}>
+                            <div style={{ padding: '1.5rem', borderTop: '1px solid var(--border-color)', display: 'flex', gap: '0.5rem' }}>
+                                <Link to={`/events/${event.id}`} className="btn" style={{ flex: 1, border: '1px solid var(--border-color)', color: 'white', textAlign: 'center' }}>
                                     View Details
                                 </Link>
+                                {(user?.role === 'ADMIN' || (user?.role === 'ORGANIZER' && event.organizerId === user?.userId)) && (
+                                    <button onClick={() => handleDeleteEvent(event.id)} className="btn" style={{ 
+                                        padding: '0.4rem 0.8rem', 
+                                        background: 'rgba(255,68,68,0.1)', 
+                                        color: 'var(--danger)', 
+                                        border: '1px solid rgba(255,68,68,0.3)' 
+                                    }}>
+                                        Delete
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ))}

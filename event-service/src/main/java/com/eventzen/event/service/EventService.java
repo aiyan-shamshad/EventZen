@@ -14,12 +14,12 @@ import com.eventzen.event.repository.VenueRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class EventService {
 
@@ -29,6 +29,21 @@ public class EventService {
     private final EventMapper eventMapper;
     private final AuthProxy authProxy;
     private final HttpServletRequest request;
+
+    @Autowired
+    public EventService(EventRepository eventRepository,
+                        VenueRepository venueRepository,
+                        VendorRepository vendorRepository,
+                        EventMapper eventMapper,
+                        AuthProxy authProxy,
+                        HttpServletRequest request) {
+        this.eventRepository = eventRepository;
+        this.venueRepository = venueRepository;
+        this.vendorRepository = vendorRepository;
+        this.eventMapper = eventMapper;
+        this.authProxy = authProxy;
+        this.request = request;
+    }
 
     /**
      * Helper to get the token for OpenFeign requests.
@@ -103,5 +118,27 @@ public class EventService {
             response.setOrganizerName(organizer.getName());
         }
         return response;
+    }
+
+    /**
+     * Delete an event.
+     * - ADMIN can delete any event.
+     * - ORGANIZER can only delete events they created.
+     */
+    public void deleteEvent(Long eventId, Long userId, String userRole) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found: " + eventId));
+
+        if ("ADMIN".equals(userRole)) {
+            eventRepository.delete(event);
+            return;
+        }
+
+        if ("ORGANIZER".equals(userRole) && event.getOrganizerId().equals(userId)) {
+            eventRepository.delete(event);
+            return;
+        }
+
+        throw new RuntimeException("You do not have permission to delete this event.");
     }
 }
