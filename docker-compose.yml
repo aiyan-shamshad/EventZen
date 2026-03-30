@@ -53,7 +53,7 @@ services:
       - DB_USER=root
       - DB_PASSWORD=root
       - DB_NAME=eventzen_attendees
-      - JWT_SECRET=my-super-secret-key-for-jwt-signing
+      - JWT_SECRET=your_jwt_secret_at_least_256_bits_long
     depends_on:
       - mysql-db
     networks:
@@ -69,7 +69,7 @@ services:
       - DB_USER=root
       - DB_PASSWORD=root
       - DB_NAME=eventzen_budgets
-      - JWT_SECRET=my-super-secret-key-for-jwt-signing
+      - JWT_SECRET=your_jwt_secret_at_least_256_bits_long
     depends_on:
       - mysql-db
     networks:
@@ -81,10 +81,10 @@ services:
       - "8080:8080"
     environment:
       # Inject Docker internal hostnames into the Gateway routes
-      - SPRING_CLOUD_GATEWAY_ROUTES_0_URI=http://user-auth-service:8081
-      - SPRING_CLOUD_GATEWAY_ROUTES_1_URI=http://event-service:8082
-      - SPRING_CLOUD_GATEWAY_ROUTES_2_URI=http://attendee-service:3001
-      - SPRING_CLOUD_GATEWAY_ROUTES_3_URI=http://budget-service:3002
+      - USER_AUTH_SERVICE_URL=http://user-auth-service:8081
+      - EVENT_SERVICE_URL=http://event-service:8082
+      - ATTENDEE_SERVICE_URL=http://attendee-service:3001
+      - BUDGET_SERVICE_URL=http://budget-service:3002
     depends_on:
       - user-auth-service
       - event-service

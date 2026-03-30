@@ -19,22 +19,22 @@ spring:
             allowedHeaders: "*"
       routes:
         - id: user-auth-service
-          uri: http://localhost:8081
+          uri: ${USER_AUTH_SERVICE_URL:http://localhost:8081}
           predicates:
             - Path=/api/auth/**
 
         - id: event-service
-          uri: http://localhost:8082
+          uri: ${EVENT_SERVICE_URL:http://localhost:8082}
           predicates:
             - Path=/api/events/**
 
         - id: attendee-service
-          uri: http://localhost:3001
+          uri: ${ATTENDEE_SERVICE_URL:http://localhost:3001}
           predicates:
             - Path=/api/attendees/**
 
         - id: budget-service
-          uri: http://localhost:3002
+          uri: ${BUDGET_SERVICE_URL:http://localhost:3002}
           predicates:
             - Path=/api/budget/**
 

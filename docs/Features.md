@@ -12,6 +12,12 @@
 
 ---
 
+## Role Permissions
+- **Attendee:** Attendees are the default users in the system. They can browse through the list of published events and view specific event details. Attendees have the ability to register (RSVP) to events, managing their own registrations, and can view a personal list of events they are attending.
+- **Organizer:** Organizers have elevated privileges designed for event creation and management. An organizer can create new events, assign venues, and coordinate vendors. They can also delete events, but strictly only the ones they themselves have created. They have full control over the attendee list for their events, can send out invitations, and update RSVP statuses manually. Additionally, organizers have complete financial control, allowing them to create budgets, log expenses, and generate financial reports for their events.
+- **Admin:** Admins possess the highest level of access within the system. They inherit all the capabilities of an Organizer (creating events, managing budgets, coordinating attendees, etc.) but also have exclusive system-wide administrative powers. This includes managing the global catalog of venues and vendors. Admins have full user administration rights, allowing them to view all users in the system, change user roles, and delete accounts. Furthermore, admins bypass creator restrictions and can delete any event in the system.
+
+---
 ## Module 1: User & Authentication
 
 ### Features

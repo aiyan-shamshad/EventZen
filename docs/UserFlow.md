@@ -72,14 +72,15 @@ flowchart TD
 ```mermaid
 flowchart TD
     A[Admin Dashboard] --> B[Manage Users]
-    A --> C[View All Events]
-    A --> D[Manage Venues]
+    A --> C[Full Organizer Privileges]
+    A --> D[System Registries]
 
     B --> B1[View All Users]
     B --> B2[Change Roles]
     B --> B3[Delete Users]
 
     D --> D1[Add Venues]
+    D --> D2[Add Vendors]
 ```
 
 ## Request Flow Through System
